@@ -68,26 +68,26 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(22), dp(20), dp(28))
             setBackgroundColor(Color.rgb(242, 247, 245))
         }
-        page.addView(label("SIEŤOVÁ KONTROLA", 12, Color.rgb(0, 112, 97), true))
-        page.addView(label("Čo som pripojil?", 28, Color.rgb(25, 43, 41), true).apply {
+        page.addView(label("NETWORK CHECK", 12, Color.rgb(0, 112, 97), true))
+        page.addView(label("What Am I Connected To?", 28, Color.rgb(25, 43, 41), true).apply {
             setPadding(0, dp(5), 0, dp(3))
         })
-        page.addView(label("Prehľad pripojenia k internetu", 15, Color.rgb(91, 108, 104)))
+        page.addView(label("Overview of your internet connection", 15, Color.rgb(91, 108, 104)))
 
         val status = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(17), dp(15), dp(17), dp(15))
             background = rounded(Color.WHITE, dp(12), Color.rgb(220, 231, 227))
         }
-        statusTitle = label("Kontrolujem pripojenie…", 18, Color.rgb(25, 43, 41), true)
-        statusDetail = label("Chvíľku strpenia.", 14, Color.rgb(91, 108, 104)).apply {
+        statusTitle = label("Checking connection…", 18, Color.rgb(25, 43, 41), true)
+        statusDetail = label("Please wait a moment.", 14, Color.rgb(91, 108, 104)).apply {
             setPadding(0, dp(5), 0, 0)
         }
         status.addView(statusTitle)
         status.addView(statusDetail)
         page.addView(status, columnParams(top = 20))
 
-        page.addView(label("ÚDAJE O PRIPOJENÍ", 12, Color.rgb(91, 108, 104), true).apply {
+        page.addView(label("CONNECTION DETAILS", 12, Color.rgb(91, 108, 104), true).apply {
             setPadding(0, dp(23), 0, dp(9))
         })
         val info = LinearLayout(this).apply {
@@ -96,12 +96,12 @@ class MainActivity : Activity() {
             background = rounded(Color.WHITE, dp(12), Color.rgb(220, 231, 227))
         }
         listOf(
-            "IP adresa" to "Zisťujem…",
-            "Gateway" to "Zisťujem…",
-            "DNS" to "Zisťujem…",
-            "Wi-Fi signál" to "Zisťujem…",
-            "Verejná IP" to "Zisťujem…",
-            "Ping · 1.1.1.1" to "Zisťujem…"
+            "IP address" to "Detecting…",
+            "Gateway" to "Detecting…",
+            "DNS" to "Detecting…",
+            "Wi-Fi signal" to "Detecting…",
+            "Public IP" to "Detecting…",
+            "Ping · 1.1.1.1" to "Detecting…"
         ).forEachIndexed { index, (name, initial) ->
             val row = createInfoRow(name, initial)
             info.addView(row, ViewGroup.LayoutParams.MATCH_PARENT, dp(59))
@@ -116,9 +116,9 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        refreshButton = actionButton("Obnoviť", Color.rgb(0, 112, 97), Color.WHITE)
+        refreshButton = actionButton("Refresh", Color.rgb(0, 112, 97), Color.WHITE)
         refreshButton.setOnClickListener { refresh() }
-        val exportButton = actionButton("Zdieľať výsledok", Color.WHITE, Color.rgb(25, 71, 64)).apply {
+        val exportButton = actionButton("Share result", Color.WHITE, Color.rgb(25, 71, 64)).apply {
             background = rounded(Color.WHITE, dp(10), Color.rgb(195, 213, 207))
             setOnClickListener { shareReport() }
         }
@@ -158,27 +158,27 @@ class MainActivity : Activity() {
 
     private fun refresh() {
         refreshButton.isEnabled = false
-        refreshButton.text = "Kontrolujem…"
-        statusTitle.text = "Kontrolujem pripojenie…"
-        statusDetail.text = "Overujem DNS a dostupnosť internetu."
+        refreshButton.text = "Checking…"
+        statusTitle.text = "Checking connection…"
+        statusDetail.text = "Verifying DNS and internet availability."
         val snapshot = readSnapshot()
-        setValue("IP adresa", snapshot.ip)
+        setValue("IP address", snapshot.ip)
         setValue("Gateway", snapshot.gateway)
         setValue("DNS", snapshot.dns)
-        setValue("Wi-Fi signál", wifiSignal(snapshot.wifi))
-        setValue("Verejná IP", "Zisťujem…")
-        setValue("Ping · 1.1.1.1", "Zisťujem…")
+        setValue("Wi-Fi signal", wifiSignal(snapshot.wifi))
+        setValue("Public IP", "Detecting…")
+        setValue("Ping · 1.1.1.1", "Detecting…")
 
         worker.execute {
             val dnsOk = runCatching { InetAddress.getByName("api.ipify.org") }.isSuccess
-            val publicIp = fetchPublicIp() ?: "Nezistená"
+            val publicIp = fetchPublicIp() ?: "Unknown"
             val reachable = runCatching {
                 var responded = false
                 val elapsed = measureTimeMillis {
                     responded = InetAddress.getByName("1.1.1.1").isReachable(1800)
                 }
-                if (responded) "$elapsed ms" else "Bez odpovede"
-            }.getOrDefault("Nedostupný")
+                if (responded) "$elapsed ms" else "No response"
+            }.getOrDefault("Unreachable")
             val pingResult = reachable
             val internetOk = runCatching {
                 Socket().use { socket ->
@@ -188,30 +188,30 @@ class MainActivity : Activity() {
             }.getOrDefault(false)
 
             val (title, detail, color) = when {
-                snapshot.gateway == "Nezistená" -> Triple(
-                    "Problém s gateway", "Zariadenie nenašlo predvolenú bránu.", Color.rgb(166, 73, 26)
+                snapshot.gateway == "Unknown" -> Triple(
+                    "Gateway issue", "The device couldn't find a default gateway.", Color.rgb(166, 73, 26)
                 )
                 !dnsOk -> Triple(
-                    "Problém s DNS", "Názov internetovej služby sa nepodarilo preložiť.", Color.rgb(166, 73, 26)
+                    "DNS issue", "Couldn't resolve the internet service name.", Color.rgb(166, 73, 26)
                 )
                 !internetOk -> Triple(
-                    "Problém s gateway", "DNS funguje, ale internetová brána neodpovedá.", Color.rgb(166, 73, 26)
+                    "Gateway issue", "DNS works, but the internet gateway isn't responding.", Color.rgb(166, 73, 26)
                 )
                 else -> Triple(
-                    "Internet OK", "Pripojenie aj DNS odpovedajú.", Color.rgb(0, 112, 97)
+                    "Internet OK", "Both the connection and DNS are responding.", Color.rgb(0, 112, 97)
                 )
             }
             val report = buildReport(snapshot, publicIp, pingResult, title, detail)
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
-                setValue("Verejná IP", publicIp)
+                setValue("Public IP", publicIp)
                 setValue("Ping · 1.1.1.1", pingResult)
                 statusTitle.text = title
                 statusTitle.setTextColor(color)
                 statusDetail.text = detail
                 lastReport = report
                 refreshButton.isEnabled = true
-                refreshButton.text = "Obnoviť"
+                refreshButton.text = "Refresh"
             }
         }
     }
@@ -226,16 +226,16 @@ class MainActivity : Activity() {
             ?.firstOrNull { it is Inet4Address && !it.isLoopbackAddress }
             ?.hostAddress
             ?: properties?.linkAddresses?.firstOrNull()?.address?.hostAddress
-            ?: "Nezistená"
+            ?: "Unknown"
         val gateway = properties?.routes
             ?.firstOrNull { it.isDefaultRoute }
             ?.gateway?.hostAddress
-            ?: "Nezistená"
+            ?: "Unknown"
         val dns = properties?.dnsServers
             ?.mapNotNull { it.hostAddress }
             ?.joinToString(", ")
             ?.takeIf { it.isNotBlank() }
-            ?: "Nezistené"
+            ?: "Unknown"
         val wifi = if (Build.VERSION.SDK_INT >= 29 &&
             capabilities?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true
         ) {
@@ -247,15 +247,15 @@ class MainActivity : Activity() {
     }
 
     private fun wifiSignal(info: WifiInfo?): String {
-        if (info == null) return "Nie ste na Wi-Fi"
+        if (info == null) return "Not on Wi-Fi"
         val rssi = info.rssi
-        if (rssi <= -100 || rssi == 0) return "Nezistený"
+        if (rssi <= -100 || rssi == 0) return "Unknown"
         val level = android.net.wifi.WifiManager.calculateSignalLevel(rssi, 5)
         val quality = when (level) {
-            4 -> "Výborný"
-            3 -> "Dobrý"
-            2 -> "Slabší"
-            else -> "Slabý"
+            4 -> "Excellent"
+            3 -> "Good"
+            2 -> "Fair"
+            else -> "Weak"
         }
         return "$quality · $rssi dBm"
     }
@@ -274,24 +274,24 @@ class MainActivity : Activity() {
         result: String,
         detail: String
     ): String = listOf(
-        "Čo som pripojil? – výsledok kontroly",
-        "Stav: $result",
+        "What Am I Connected To? – check result",
+        "Status: $result",
         "Detail: $detail",
-        "IP adresa: ${snapshot.ip}",
+        "IP address: ${snapshot.ip}",
         "Gateway: ${snapshot.gateway}",
         "DNS: ${snapshot.dns}",
-        "Wi-Fi signál: ${wifiSignal(snapshot.wifi)}",
-        "Verejná IP: $publicIp",
+        "Wi-Fi signal: ${wifiSignal(snapshot.wifi)}",
+        "Public IP: $publicIp",
         "Ping 1.1.1.1: $ping"
     ).joinToString("\n")
 
     private fun shareReport() {
-        val text = lastReport.ifBlank { "Kontrola pripojenia ešte prebieha." }
+        val text = lastReport.ifBlank { "The connection check is still running." }
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        startActivity(Intent.createChooser(intent, "Zdieľať výsledok"))
+        startActivity(Intent.createChooser(intent, "Share result"))
     }
 
     private fun setValue(key: String, value: String) {

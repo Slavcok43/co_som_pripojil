@@ -1,13 +1,13 @@
-# Čo som pripojil?
+# What Am I Connected To?
 
-Jednoduchá natívna Android aplikácia na kontrolu pripojenia. Zobrazuje lokálnu IP adresu, predvolenú gateway, DNS servery, Wi-Fi signál, verejnú IP a odozvu na ping `1.1.1.1`. Výsledok možno zdieľať ako obyčajný text.
+A simple native Android app for checking your network connection. It shows the local IP address, default gateway, DNS servers, Wi-Fi signal, public IP, and ping response to `1.1.1.1`. The result can be shared as plain text.
 
-## Spustenie
+## Running the app
 
-Otvorte priečinok `co-som-pripojil` v Android Studio. Projekt potrebuje JDK 17, Android SDK Platform 35 a Android Gradle Plugin 8.7.3. Po synchronizácii projektu ho možno spustiť na zariadení s Androidom 8.0 alebo novším.
+Open the `co-som-pripojil` folder in Android Studio. The project requires JDK 17, Android SDK Platform 35, and Android Gradle Plugin 8.7.3. After the project syncs, it can run on a device with Android 8.0 or newer.
 
-## Diagnostika
+## Diagnostics
 
-Kontrola rozlišuje chýbajúcu predvolenú gateway, zlyhanie DNS prekladu a úspešné načítanie verejnej IP. Ping používa `InetAddress.isReachable`; niektoré siete blokujú ICMP, preto „Bez odpovede“ samo osebe neznamená výpadok internetu.
+The check distinguishes between a missing default gateway, a DNS resolution failure, and a successful public IP lookup. Ping uses `InetAddress.isReachable`; some networks block ICMP, so "No response" alone doesn't necessarily mean the internet is down.
 
-Verejná IP sa zisťuje cez službu `api.ipify.org`. Aplikácia neposiela diagnostické údaje nikam inam; zdieľanie spustí až používateľ.
+The public IP is retrieved via the `api.ipify.org` service. The app doesn't send diagnostic data anywhere else; sharing is only triggered by the user.
